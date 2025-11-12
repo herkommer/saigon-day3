@@ -38,8 +38,8 @@ builder.Services.AddSingleton<AnomalyDetectionService>();
 // TASK 1: Uncomment PerformanceMonitoringService registration
 // ============================================================================
 
-builder.Services.AddSingleton<PerformanceMonitoringService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<PerformanceMonitoringService>());
+// builder.Services.AddSingleton<PerformanceMonitoringService>();
+// builder.Services.AddHostedService(sp => sp.GetRequiredService<PerformanceMonitoringService>());
 
 var app = builder.Build();
 
@@ -268,26 +268,26 @@ app.MapGet("/stats", (ObservationStore observationStore, ModelService modelServi
 // TASK 2: Uncomment /performance-history endpoint
 // ============================================================================
 
-app.MapGet("/performance-history", (PerformanceMonitoringService monitoringService) =>
-{
-    using var activity = activitySource.StartActivity("GetPerformanceHistory");
-
-    var history = monitoringService.GetPerformanceHistory();
-
-    return Results.Ok(new
-    {
-        snapshotCount = history.Count,
-        snapshots = history.Select(s => new
-        {
-            s.Timestamp,
-            s.TotalObservations,
-            s.LabeledObservations,
-            s.Accuracy,
-            s.ModelVersion,
-            s.AverageConfidence,
-            s.LowConfidenceCount
-        })
-    });
-});
+// app.MapGet("/performance-history", (PerformanceMonitoringService monitoringService) =>
+// {
+//     using var activity = activitySource.StartActivity("GetPerformanceHistory");
+//
+//     var history = monitoringService.GetPerformanceHistory();
+//
+//     return Results.Ok(new
+//     {
+//         snapshotCount = history.Count,
+//         snapshots = history.Select(s => new
+//         {
+//             s.Timestamp,
+//             s.TotalObservations,
+//             s.LabeledObservations,
+//             s.Accuracy,
+//             s.ModelVersion,
+//             s.AverageConfidence,
+//             s.LowConfidenceCount
+//         })
+//     });
+// });
 
 app.Run();
