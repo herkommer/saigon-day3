@@ -20,7 +20,7 @@ Create observations with high accuracy (threshold < 0.6 = no alert):
 # Generate 15 correct predictions (high accuracy phase)
 foreach ($i in 1..15) {
     $value = 0.1 + ($i * 0.02)  # 0.12, 0.14, 0.16, ... 0.40
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=false" -Method POST | Out-Null
 }
 
@@ -38,7 +38,7 @@ Create a few incorrect predictions (spike):
 # Generate 5 WRONG predictions (temporary spike)
 foreach ($i in 1..5) {
     $value = 0.2 + ($i * 0.02)  # Low values
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
     # Label as TRUE even though model predicts FALSE (intentional mislabel)
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=true" -Method POST | Out-Null
 }
@@ -57,7 +57,7 @@ Generate more correct predictions:
 # Generate 10 correct predictions (recovery)
 foreach ($i in 1..10) {
     $value = 0.1 + ($i * 0.03)
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=false" -Method POST | Out-Null
 }
 
@@ -75,7 +75,7 @@ Create persistent incorrect predictions (fundamental shift):
 # Generate 15 WRONG predictions (permanent shift)
 foreach ($i in 1..15) {
     $value = 0.3 + ($i * 0.02)
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
     # Label opposite of what model predicts
     $oppositeLabel = -not $r.predictedAlert
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=$oppositeLabel" -Method POST | Out-Null
@@ -167,7 +167,7 @@ Invoke-RestMethod "http://localhost:5000/anomaly-history" | ConvertTo-Json -Dept
 # Generate varied data
 foreach ($i in 1..20) {
     $value = $i * 0.04
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
     $label = $value -gt 0.6
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=$label" -Method POST | Out-Null
 }
@@ -175,7 +175,7 @@ foreach ($i in 1..20) {
 # Introduce anomalies
 foreach ($i in 1..10) {
     $value = 0.3
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=true" -Method POST | Out-Null
 }
 
@@ -237,6 +237,45 @@ prediction[3] = martingale score (higher = more confident)
 - Martingale > 0.9 → High confidence change point
 - Martingale > 0.5 → Medium confidence change point
 - Martingale < 0.5 → Weak signal
+
+**What is Martingale Score?**
+
+The **Martingale score** is a cumulative confidence measure that builds up over time as evidence accumulates for a fundamental shift in the data.
+
+**Key concept:**
+
+- **Betting analogy:** Imagine betting on "has the pattern changed?" after each data point
+- Each correct "change detected" prediction increases your stake (like a winning streak)
+- Each incorrect prediction resets your stake (like losing)
+- **High score** = many consecutive signals pointing to same change → very confident
+- **Low score** = inconsistent signals or no change → not confident
+
+**Example:**
+
+- Points 1-20: Model accuracy = 95% (stable baseline)
+- Points 21-30: Model accuracy = 50% (sudden persistent drop)
+- Martingale watches each point:
+  - Point 21: "Maybe a change?" (score = 0.2)
+  - Point 22: "Still low, confidence growing" (score = 0.4)
+  - Point 23-25: "Definitely changed!" (score = 0.6 → 0.8 → 0.95)
+- Score > 0.9: **"I'm 90%+ confident this is a permanent shift, not random noise"**
+
+**Why use Martingale instead of just comparing averages?**
+
+❌ **Bad:** `if (recent_avg < old_avg - 10%) alert();` → Could trigger on temporary dips
+
+✅ **Good:** `if (martingale > 0.9) alert();` → Only triggers when multiple consecutive points confirm persistent change
+
+**Difference from P-Value:**
+
+- **P-value:** "Is this ONE point unusual?" (snapshot)
+- **Martingale:** "Has the ENTIRE pattern fundamentally shifted?" (cumulative evidence)
+
+**Real-world interpretation:**
+
+- **Martingale 0.95**: Almost certain the model's underlying accuracy has permanently changed (retrain recommended)
+- **Martingale 0.6**: Some evidence of shift but not conclusive (monitor closely)
+- **Martingale 0.3**: Just normal variation (no action needed)
 
 ## Expected Console Output
 
