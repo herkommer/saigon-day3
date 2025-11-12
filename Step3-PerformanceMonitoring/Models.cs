@@ -166,9 +166,9 @@ public class AnomalyDetectionService
 
     public List<AnomalyAlert> DetectAccuracySpikes(List<double> accuracyHistory)
     {
-        if (accuracyHistory.Count < 5)
+        if (accuracyHistory.Count < 12)
         {
-            Log.Information("Not enough data for spike detection (need 5+, have {Count})", accuracyHistory.Count);
+            Log.Information("Not enough data for spike detection (need 12+, have {Count})", accuracyHistory.Count);
             return new List<AnomalyAlert>();
         }
 
@@ -221,9 +221,9 @@ public class AnomalyDetectionService
 
     public List<AnomalyAlert> DetectAccuracyChangePoints(List<double> accuracyHistory)
     {
-        if (accuracyHistory.Count < 5)
+        if (accuracyHistory.Count < 12)
         {
-            Log.Information("Not enough data for change point detection (need 5+, have {Count})", accuracyHistory.Count);
+            Log.Information("Not enough data for change point detection (need 12+, have {Count})", accuracyHistory.Count);
             return new List<AnomalyAlert>();
         }
 

@@ -20,7 +20,7 @@ Create observations with high accuracy (threshold < 0.6 = no alert):
 # Generate 15 correct predictions (high accuracy phase)
 foreach ($i in 1..15) {
     $value = 0.1 + ($i * 0.02)  # 0.12, 0.14, 0.16, ... 0.40
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=false" -Method POST | Out-Null
 }
 
@@ -38,7 +38,7 @@ Create a few incorrect predictions (spike):
 # Generate 5 WRONG predictions (temporary spike)
 foreach ($i in 1..5) {
     $value = 0.2 + ($i * 0.02)  # Low values
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
     # Label as TRUE even though model predicts FALSE (intentional mislabel)
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=true" -Method POST | Out-Null
 }
@@ -57,7 +57,7 @@ Generate more correct predictions:
 # Generate 10 correct predictions (recovery)
 foreach ($i in 1..10) {
     $value = 0.1 + ($i * 0.03)
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=false" -Method POST | Out-Null
 }
 
@@ -75,7 +75,7 @@ Create persistent incorrect predictions (fundamental shift):
 # Generate 15 WRONG predictions (permanent shift)
 foreach ($i in 1..15) {
     $value = 0.3 + ($i * 0.02)
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
     # Label opposite of what model predicts
     $oppositeLabel = -not $r.predictedAlert
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=$oppositeLabel" -Method POST | Out-Null
@@ -167,7 +167,7 @@ Invoke-RestMethod "http://localhost:5000/anomaly-history" | ConvertTo-Json -Dept
 # Generate varied data
 foreach ($i in 1..20) {
     $value = $i * 0.04
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
     $label = $value -gt 0.6
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=$label" -Method POST | Out-Null
 }
@@ -175,7 +175,7 @@ foreach ($i in 1..20) {
 # Introduce anomalies
 foreach ($i in 1..10) {
     $value = 0.3
-    $r = Invoke-RestMethod "http://localhost:5000/predict/$($value)"
+    $r = Invoke-RestMethod "http://localhost:5000/predict/$value"
     Invoke-WebRequest "http://localhost:5000/label/$($r.observationId)?actualAlert=true" -Method POST | Out-Null
 }
 

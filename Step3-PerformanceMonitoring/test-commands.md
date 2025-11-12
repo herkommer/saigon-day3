@@ -2,6 +2,17 @@
 
 ## Prerequisites
 
+**IMPORTANT: Before running, complete TASK 1 in `Program.cs`:**
+
+Uncomment these two lines:
+
+```csharp
+builder.Services.AddSingleton<PerformanceMonitoringService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<PerformanceMonitoringService>());
+```
+
+Then start the API:
+
 ```powershell
 dotnet run
 ```
@@ -100,8 +111,18 @@ Start-Sleep -Seconds 35
 ```
 [HH:mm:ss INF] Performance Snapshot: Accuracy=95%, Labeled=20, AvgConfidence=0.XX, LowConf=1
 [HH:mm:ss INF] Performance Snapshot: Accuracy=72%, Labeled=28, AvgConfidence=0.XX, LowConf=3
+```
+
+**Note:** Anomaly detection (spike/change point warnings) requires 12+ performance snapshots. Monitoring runs every 30 seconds, so you'll need to wait ~6 minutes for enough data. After 12+ snapshots, you should see:
+
+```
 [HH:mm:ss WAR] SPIKE DETECTED: Sudden accuracy change detected at index 7: 72% (p-value: 0.0234)
 [HH:mm:ss WAR] Anomalies detected: 1 spikes, 0 change points
+```
+
+Continue to Phase 3:
+
+```
 [HH:mm:ss INF] Performance Snapshot: Accuracy=81%, Labeled=38, AvgConfidence=0.XX, LowConf=2
 ```
 
@@ -171,8 +192,8 @@ LowConf=5             # Count with confidence < 0.6
 ### Monitoring Lifecycle
 
 1. **< 5 labeled:** "Skipping monitoring: not enough labeled data"
-2. **5-19 labeled:** Snapshots collected, anomaly detection runs but may not have enough history
-3. **20+ labeled:** Full anomaly detection with reliable results
+2. **5+ labeled:** Snapshots collected every 30 seconds
+3. **12+ snapshots (~6 minutes):** Anomaly detection activates with spike/change point warnings
 
 ### Anomaly Detection Timing
 
@@ -182,7 +203,7 @@ LowConf=5             # Count with confidence < 0.6
 
 Only appears when:
 
-- At least 5 performance snapshots exist
+- At least 12 performance snapshots exist (~6 minutes of monitoring)
 - Anomaly detection algorithms find issues
 
 ## Troubleshooting
